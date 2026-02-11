@@ -104,7 +104,7 @@ main(int argc, char **argv)
 
 	// Initialize test
 	err = func.init(ctx->settings, dirfd);
-
+	//ctx->settings->ncpu = ctx->settings->cpu_limit;
 	for (long i = 0; i < ctx->settings->ncpu; i++) {
 		child = fork();
 		if (child == 0) {
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 
 			CPU_ZERO(&mask);
 			CPU_SET(i, &mask);
-			err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+			//err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
 			if (err == -1) {
 				printf("[%d] Can\'t set affinity\n", child);
 				return -1;
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 
 		CPU_ZERO(&mask);
 		CPU_SET(ctx->settings->ncpu, &mask);
-		err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+		//err = sched_setaffinity(0, sizeof(cpu_set_t), &mask);
 		if (err == -1) {
 			printf("[main] Can\'t set affinity\n");
 			return -1;

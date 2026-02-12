@@ -181,10 +181,10 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 	curr_index = WORKER_FILE_INDEX(s);
 
 	char *data = alloc_rndbytes(s->settings->file_size);
-	sprintf(filename, FNAME, curr_index);
+	sprintf(filename, "temp_syscallmeter/file_%d", curr_index);
 
 	flags = O_CREAT | O_RDWR | (((w_params.direct != 0) ? O_DIRECT : 0));
-	fd = openat(dirfd, filename, flags, 0644);
+	fd = open(filename, flags, 0644);
 	srandom(workerid);
 
 	for (;;) {
@@ -214,8 +214,8 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 				close(fd);
 				// TODO: err check
 				curr_index = WORKER_FILE_INDEX(s);
-				sprintf(filename, FNAME, curr_index);
-				fd = openat(dirfd, filename, flags, 0644);
+				sprintf(filename, "temp_syscallmeter/file_%d", curr_index);
+				fd = open(filename, flags, 0644);
 				// TODO: err check
 			}
 			pwrite(fd, &data[pos_in_file], bytes_to_write, pos_in_file);
@@ -248,8 +248,8 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 				close(fd);
 				// TODO: err check
 				curr_index = WORKER_FILE_INDEX_SYNC(needed_pos, s);
-				sprintf(filename, FNAME, curr_index);
-				fd = openat(dirfd, filename, flags, 0644);
+				sprintf(filename, "temp_syscallmeter/file_%d", curr_index);
+				fd = open(filename, flags, 0644);
 				// TODO: err check
 			}
 			err = fdatasync(fd);

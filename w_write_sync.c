@@ -80,13 +80,15 @@ typedef struct workers_test_params {
 	int sync_concurrency;
 	int direct;
 	int shift_position;
+	int work_unit;
 } workers_test_params_t;
 
 struct workers_sharedmem *w_state = NULL;
 struct workers_test_params w_params = { .sync_concurrency = 1,
 	.w_mode = JOINED,
 	.direct = 0,
-	.shift_position = 0 };
+	.shift_position = 0,
+	.work_unit = 20 };
 
 #define WORKER_FILE_INDEX(_s) (w_state->position_write / _s->settings->file_size)
 #define WORKER_FILE_INDEX_SYNC(_pos,_s) (_pos / _s->settings->file_size)
@@ -147,6 +149,8 @@ w_write_sync_option(char *option)
 		w_params.direct = 1;
 	} else if (strcmp(option, "doublelast") == 0) {
 		w_params.shift_position = 8 * 1024;
+	} else if (strncmp(option, "work", 4) == 0){
+		w_params.work_unit = strtoul(option + 4, NULL, 10);
 	} else {
 		printf("unexpected option: %s\n", option);
 		return -1;
@@ -205,7 +209,7 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 		if (WORKER_FILE_INDEX(s) >= s->settings->file_count)
 			break;
 
-		DO_WORK(20);
+		DO_WORK(w_params.work_unit);
 
 		DO_LOCK(&w_state->mx_write);
 

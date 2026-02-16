@@ -69,7 +69,9 @@ typedef struct workers_sharedmem {
 	sem_t mx_write;
 	sem_t mx_sync;
 	unsigned long position_write;
-	unsigned long position_sync;
+	volatile unsigned long position_sync;
+	char	pad[128];
+	volatile unsigned long requesed_position;
 } workers_sharedmem_t;
 
 /* Global variables - constant over time */
@@ -116,6 +118,13 @@ update_fsync_pos(unsigned long new_pos)
 {
 	unsigned long current = w_state->position_sync;
 	while (current < new_pos && !pg_atomic_compare_exchange_u64_impl(&w_state->position_sync, &current, new_pos));
+}
+
+static inline void
+update_requested_pos(unsigned long new_pos)
+{
+	unsigned long current = w_state->requesed_position;
+	while (current < new_pos && !pg_atomic_compare_exchange_u64_impl(&w_state->requesed_position, &current, new_pos));
 }
 
 
@@ -178,6 +187,7 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 	unsigned long needed_pos;
 	long write_pos_diff;
 	unsigned long save_write_pos;
+	unsigned long requested;
 
 	curr_index = WORKER_FILE_INDEX(s);
 
@@ -191,6 +201,7 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 	for (;;) {
 		position_to_add = MIN_CHUNKSIZE + random() % CHUNKSIZE;
 		needed_pos = w_state->position_write + position_to_add;
+		update_requested_pos(needed_pos);
 		if (WORKER_FILE_INDEX(s) >= s->settings->file_count)
 			break;
 
@@ -204,6 +215,9 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 			DO_UNLOCK(&w_state->mx_write);
 			continue;
 		}
+		requested = w_state->requesed_position;
+		if (needed_pos < requested)
+			needed_pos = requested;
 		write_pos_diff = (long) needed_pos - (long) w_state->position_write;
 		while (write_pos_diff > 0)
 		{

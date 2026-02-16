@@ -210,6 +210,17 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 			int index_to_open = WORKER_FILE_INDEX(s);
 			unsigned long pos_in_file = w_state->position_write % s->settings->file_size;
 			unsigned long bytes_to_write = MIN(needed_pos, (index_to_open + 1) * s->settings->file_size) - w_state->position_write;
+			unsigned long shift;
+			if (pos_in_file > w_params.shift_position)
+			{
+				shift = w_params.shift_position;
+				pos_in_file -= w_params.shift_position;
+				bytes_to_write += w_params.shift_position;
+			}
+			else
+			{
+				shift = 0;
+			}
 			if (curr_index != index_to_open)
 			{
 				close(fd);
@@ -221,8 +232,8 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 			}
 			pwrite(fd, &data[pos_in_file], bytes_to_write, pos_in_file);
 			// TODO: err check
-			w_state->position_write += bytes_to_write;
-			write_pos_diff -= bytes_to_write;
+			w_state->position_write += bytes_to_write - shift;
+			write_pos_diff -= bytes_to_write - shift;
 			if (index_to_open != WORKER_FILE_INDEX(s))
 			{
 				fdatasync(fd);

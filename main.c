@@ -277,7 +277,7 @@ parse_opts(struct meter_ctx *mctx, int argc, char **argv)
 	printf("\tCYCLES = %ld\n", mctx->settings->cycles);
 	printf("\tWORKERS = %ld\n", mctx->settings->ncpu);
 	printf("\tFILECOUNT = %d\n", mctx->settings->file_count);
-	printf("\tFILESIZE = %d\n", mctx->settings->file_size);
+	printf("\tFILESIZE = %lu\n", mctx->settings->file_size);
 
 	return 0;
 }

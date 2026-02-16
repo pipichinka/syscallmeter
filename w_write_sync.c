@@ -209,7 +209,7 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 		{
 			int index_to_open = WORKER_FILE_INDEX(s);
 			unsigned long pos_in_file = w_state->position_write % s->settings->file_size;
-			unsigned long bytes_to_write = MIN(needed_pos, (index_to_open + 1) * s->settings->file_size) - w_state->position_write;
+			unsigned long bytes_to_write = MIN(needed_pos, ((unsigned long) index_to_open + 1UL) * (unsigned long) s->settings->file_size) - w_state->position_write;
 			unsigned long shift;
 			if (pos_in_file > w_params.shift_position)
 			{

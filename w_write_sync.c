@@ -14,6 +14,7 @@
 #include "w_write_sync.h"
 #include <x86intrin.h>
 #define CHUNKSIZE 64 * 1024
+#define MIN_CHUNKSIZE 64 * 1024
 
 /*
  * Joined - single hold of lock for write and sync
@@ -188,7 +189,7 @@ w_write_sync_job(int workerid, struct meter_worker_state *s, int dirfd)
 	srandom(workerid);
 
 	for (;;) {
-		position_to_add = random() % CHUNKSIZE;
+		position_to_add = MIN_CHUNKSIZE + random() % CHUNKSIZE;
 		needed_pos = w_state->position_write + position_to_add;
 		if (WORKER_FILE_INDEX(s) >= s->settings->file_count)
 			break;
